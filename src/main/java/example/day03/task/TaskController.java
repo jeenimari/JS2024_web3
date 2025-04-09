@@ -14,7 +14,7 @@ public class TaskController {
     private final TaskService taskService;
 
     //1.과정등록
-    @PostMapping
+    @PostMapping("/course")
     public boolean post(@RequestBody Dto1 dto1){
         System.out.println("TaskController.post");
         boolean result = taskService.post(dto1);
