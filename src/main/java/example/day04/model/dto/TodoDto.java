@@ -8,7 +8,10 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 
-@Data@NoArgsConstructor@AllArgsConstructor@Builder
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
 public class TodoDto {
     private int id; // 할일 식별번호
     private String title; // 할일 제목

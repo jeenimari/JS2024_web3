@@ -21,9 +21,12 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class TodoService {
+
     private final TodoEntityRepository todoEntityRepository;
     // 1. 개별 등록
+
     public TodoDto todoSave( TodoDto todoDto ){
+
         // 1. dto 를 entity 변환하기
         TodoEntity todoEntity = todoDto.toEntity();
         // 2. entity를 save(영속화/db레코드 매칭/등록) 한다.
