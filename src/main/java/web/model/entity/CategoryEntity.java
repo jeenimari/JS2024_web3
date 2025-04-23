@@ -12,7 +12,7 @@ import java.util.List;
 @Builder
 @ToString
 @NoArgsConstructor@AllArgsConstructor //롬복
-public class CategoryEntity {
+public class CategoryEntity extends BaseTime {
 
 
     @Id//pk

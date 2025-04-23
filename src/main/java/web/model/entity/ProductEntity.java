@@ -14,12 +14,12 @@ import java.util.List;
 @ToString
 @NoArgsConstructor
 @AllArgsConstructor //롬복
-public class ProductEntity {
+public class ProductEntity extends BaseTime {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long pno; //제품 식별번호
 
-    @Column(nullable = false)
+        @Column(nullable = false)
     private String pname; //제품명
 
     @Column(columnDefinition = "longtext") //mysql 네이티브 타입 지정

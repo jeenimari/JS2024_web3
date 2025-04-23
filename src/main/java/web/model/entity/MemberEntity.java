@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @Builder
 
-public class MemberEntity {
+public class MemberEntity extends BaseTime {
 
     @Id
     @GeneratedValue( strategy = GenerationType.IDENTITY)// 기본키
