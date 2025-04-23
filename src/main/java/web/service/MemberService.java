@@ -20,6 +20,7 @@ import java.util.concurrent.TimeUnit;
 public class MemberService {
     private final MemberEntityRepository memberEntityRepository;
 
+
     // [1] 회원가입
     public boolean signUp(  MemberDto memberDto ){
         // 1.암호화

@@ -2,6 +2,7 @@ package web.util;
 
 import jakarta.servlet.ServletOutputStream;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -11,7 +12,8 @@ import java.net.URLEncoder;
 import java.util.Arrays;
 import java.util.UUID;
 
-public class fileUtil {
+@Component //빈 등록
+public class FileUtil {
     // 1. 현재 프로젝트 최상위 디렉토리(폴더) 경로찾기
     String baseDir = System.getProperty("user.dir"); // 현재 작업중인 최상위(프로젝트 절대경로) 폴더를 반환한다.
     String uploadPath = baseDir+"/build/resources/main/static/upload/";
