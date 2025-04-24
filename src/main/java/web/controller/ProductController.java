@@ -3,6 +3,7 @@ package web.controller;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import web.model.dto.CategoryDto;
 import web.model.dto.ProductDto;
 import web.service.MemberService;
 import web.service.ProductService;
@@ -49,15 +50,15 @@ public class ProductController {
         //3.요청 성공시 200 반환
         return ResponseEntity.status(200).body(true); // 200요청 성공과 true 반환
     }
+//
+//    //2. 카테고리별 제품 전체조회 : 설계 : ?cno=1
+//    @GetMapping("/all")
+//    public ResponseEntity<List<ProductDto>>allProducts(
+//            @RequestParam(required = false)long cno ){ //cno는 필수가 아니라는 뜻.
+//        List<ProductDto>productDtoList = productService.allProducts(cno);
+//        return ResponseEntity.status(200).body( productDtoList); // 200 성공과 값 반환.
 
-    //2. 카테고리별 제품 전체조회 : 설계 : ?cno=1
-    @GetMapping("/all")
-    public ResponseEntity<List<ProductDto>>allProducts(
-            @RequestParam(required = false)long cno ){ //cno는 필수가 아니라는 뜻.
-        List<ProductDto>productDtoList = productService.allProducts(cno);
-        return ResponseEntity.status(200).body( productDtoList); // 200 성공과 값 반환.
-
-    }
+//    }
 
     //3. 제품 개별 조회 : 설계 : ?pno=1
     @GetMapping("/view")
@@ -103,5 +104,82 @@ public class ProductController {
         return ResponseEntity.status(200).body(true);
 
     }
+
+    //6.제품 수정(+이미지 추가)
+    /*제품설계
+     PUT, /product/update , boolean
+     수정할내용 : 수정할값 ( pname.pcontent , pprice , cno , files ) ,수정할대상 : pno , 권한(token)
+
+
+     */
+    @PutMapping("/update")
+    public ResponseEntity<Boolean>updateProduct(
+            @RequestHeader("Authorization") String token,
+            @ModelAttribute ProductDto productDto  ){ //HTTP Header(통신 관련 정보)/HTTP Body( )
+
+        //1.토큰의 mno 추출
+        int loginMno;
+        try{
+            loginMno = memberService.info(token).getMno();
+        }catch (Exception e){return ResponseEntity.status(401).body(false);}
+        //2.수정 서비스 호출
+        boolean result = productService.updateProduct(productDto,loginMno);
+        if(result == false)return  ResponseEntity.status(400).body(false);
+        return ResponseEntity.status(200).body(true);
+    }
+
+    //7.이미지 개별 삭제
+    /*
+     매핑 : Delete . / product/image , boolean
+     매개변수 : 삭제할대상: ino, 권한(token)
+
+     */
+    @DeleteMapping("/image")
+    public ResponseEntity<Boolean>deleteImage(
+            @RequestParam long ino , @RequestHeader("Authorization")String token){
+        int loginMno;
+        try { loginMno = memberService.info(token).getMno();
+
+        }catch (Exception e){return ResponseEntity.status(401).body(false);}
+        boolean result = productService.deleteImage(ino,loginMno);
+        if(result== false)ResponseEntity.status(400).body(false);
+        return ResponseEntity.status(200).body(true);
+    }
+
+
+
+
+
+    //8.카테고리 조회
+    /*
+     매핑 : Get . / product/category, CategoryDto vs Vo vs Map<String>
+     매개변수 : x
+
+
+    */
+    @GetMapping("/category")
+    public ResponseEntity<List<CategoryDto>>getCategory(){
+        List<CategoryDto> categoryDtoList = productService.getCategory();
+        return ResponseEntity.status(200).body(categoryDtoList);
+    }
+
+
+    //9. 검색+페이징
+    /* 매핑 : Get , /product/all , List<productDto>
+       매개변수 : cno(없으면 전체조회) , page(현재 페이지 번호 없으면 1페이지),keyword(없으면 전체조회)
+    *
+    * */
+
+    @GetMapping("/all")
+    public ResponseEntity<List<ProductDto>> allProducts(
+            @RequestParam(required = false)Long cno, //long(기본타입) Long( 참조타입 )
+            @RequestParam(defaultValue = "1")int page, //조회할 현재 페이지 번호 , defaultValue
+            @RequestParam(defaultValue = "5")int size, // size : 페이지당 게시물 수
+            @RequestParam(required = false)String keyword) { // keyword : (제품명) 검색어
+        List<ProductDto>productDtoList = productService.allProducts(cno, page, size, keyword);
+        return ResponseEntity.status(200).body(productDtoList);
+    }
+
+
 
 }

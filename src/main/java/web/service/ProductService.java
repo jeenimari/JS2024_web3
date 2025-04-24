@@ -1,10 +1,15 @@
 package web.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import web.model.dto.CategoryDto;
 import web.model.dto.ProductDto;
 import web.model.entity.CategoryEntity;
 import web.model.entity.ImgEntity;
@@ -71,23 +76,23 @@ public class ProductService {
         return true;
     }// c end
 
-
-    //2. 카테고리별 제품 전체조회 : 설계 : ?cno=1
-    public List<ProductDto>allProducts(long cno){
-        //조회된 결과를 저장하는 리스트 변수
-        List<ProductEntity>productEntityList;
-        //2.cno에 따라 카테고리별 조회 vs 전체조회
-        if(cno<0 ){
-            //2-1 : 카테고리별 조회
-            productEntityList = productEntityRepository.findAll();
-        }else{// 2-2 전체조회
-
-           productEntityList = productEntityRepository.findAll();
-        }//전체조회
-        return productEntityList.stream()
-                .map(ProductDto::toDto)
-                .collect(Collectors.toList());
-    }
+//
+//    //2. 카테고리별 제품 전체조회 : 설계 : ?cno=1
+//    public List<ProductDto>allProducts(long cno){
+//        //조회된 결과를 저장하는 리스트 변수
+//        List<ProductEntity>productEntityList;
+//        //2.cno에 따라 카테고리별 조회 vs 전체조회
+//        if(cno<0 ){
+//            //2-1 : 카테고리별 조회
+//            productEntityList = productEntityRepository.findAll();
+//        }else{// 2-2 전체조회
+//
+//           productEntityList = productEntityRepository.findAll();
+//        }//전체조회
+//        return productEntityList.stream()
+//                .map(ProductDto::toDto)
+//                .collect(Collectors.toList());
+//    }
 
     //3. 제품 개별조회 :설계: ?pno=1
     public ProductDto viewProduct(long pno){
@@ -136,6 +141,99 @@ public class ProductService {
         return true;
 
     }
+
+    //6.제품 수정(+ 이미지 추가)
+    public boolean updateProduct(ProductDto productDto , int loginMno){
+        //1. 기존의 제품 정보(엔티티)가져오기
+            //없으면 취소
+        Optional<ProductEntity>productEntityOptional = productEntityRepository.findById(productDto.getPno());
+        //isempty반환타입이 널이아닌지
+        if(productEntityOptional.isEmpty())return false;
+        ProductEntity productEntity = productEntityOptional.get();
+
+
+        //2.현재 토큰(로그인) 사람의 등록한 제품인지 인가 확인 //아니면 취소
+            //아니면 취소
+       if(productEntity.getMemberEntity().getMno() != loginMno)return  false;
+        //3.현재 수정할 카테고리 엔티티 가져오기
+            // 없으면 취소
+        Optional<CategoryEntity>categoryEntityOptional = categoryEntityRepository.findById(productDto.getCno());
+        if(categoryEntityOptional.isEmpty())return false;
+        CategoryEntity categoryEntity = categoryEntityOptional.get();
+        //4. 제품 정보를 setter을 이용해서 수정
+            //오류 발생시 롤백
+        productEntity.setPname(productDto.getPname());
+        productEntity.setPcontent(productDto.getPcontent());
+        productEntity.setPprice(productDto.getPprice());
+        productEntity.setCategoryEntity(categoryEntity);// 찾은 엔티티
+
+        //5.새로운 이미지가 있으면 fileUtil 에서 업로드 함수 이용하여 업로드함.
+            //오류발생 시 롤백
+
+        List<MultipartFile>newFile = productDto.getFiles();
+        if(newFile !=null && !newFile.isEmpty() ){//새로운 이미지가 존재하면
+            for(MultipartFile file : newFile){
+                String saveFileName = fileUtil.fileUpload(file);
+                if(saveFileName == null )throw new RuntimeException("파일 업로드 오류발생");
+                //throw new 예외 클래스명(); // 강제 예외 발생했다.
+                //새 이미지 처리
+                ImgEntity imgEntity = ImgEntity.builder()
+                        .iname(saveFileName)
+                        .productEntity(productEntity)
+                        .build();
+                imgEntityRepository.save(imgEntity); //이미지 엔티티 저장(영속화)
+                //*영속
+            }
+
+        }// end
+
+        return  true; //6.끝
+    }// fend
+
+
+    //6.이미지 개별 삭제
+    public boolean deleteImage(long ino,int loginMno){
+        //1.이미지 엔티티 조회
+        Optional<ImgEntity>optionalImgEntity = imgEntityRepository.findById(ino);
+        if(optionalImgEntity.isEmpty())return false;
+        ImgEntity imgEntity = optionalImgEntity.get();
+
+        //2.인가 확인 , 이미지 등록한 회원은 제품을 등록한 회원
+        if(imgEntity.getProductEntity().getMemberEntity().getMno() != loginMno )return false;
+        //3.물리적인 로컬 삭제.
+        String deleteFileName = imgEntity.getIname();
+        boolean result =  fileUtil.fileDelete(deleteFileName);
+        if(result == false)throw new RuntimeException("파일 삭제 실패");
+        //4.엔티티 삭제
+        imgEntityRepository.deleteById(ino);
+        return true;
+    }
+
+
+    // 카테고리 조회
+    public List<CategoryDto>getCategory(){
+        //1.모든 카테고리 조회
+        List<CategoryEntity>categoryEntityList = categoryEntityRepository.findAll();
+        //2.List <Entitiy> --> List<Dto> 변환
+        List<CategoryDto>categoryDtoList = categoryEntityList.stream()
+                .map(CategoryDto ::toDto)
+                .toList();
+        //.3끝
+        return categoryDtoList;
+    }
+
+    //2. 검색+페이징 , 위에서 작업한 2번 메소드 주석처리 후 진행
+    public List<ProductDto>allProducts(Long cno , int page ,int size, String keyword){
+        //1.페이징처리 설정
+        Pageable pageable = PageRequest.of (page-1, size , Sort.by(Sort.Direction.DESC,"pno") );
+
+        Page<ProductEntity>productEntities = productEntityRepository.findBySearch(cno,keyword,pageable);
+
+        //3반환타입
+        List<ProductDto>productDtoList =  productEntities.stream().map(ProductDto::toDto).collect(Collectors.toList());
+        return productDtoList;
+    }
+
 
 
 

@@ -93,4 +93,8 @@ public class MemberService {
         //반환된 개수 확인 , 비어있으면  0 아니면 size() 함수 이용한 key 개수 반환
         return keys == null?0: keys.size();
     }
+
+
+
+
 }
