@@ -223,14 +223,14 @@ public class ProductService {
     }
 
     //2. 검색+페이징 , 위에서 작업한 2번 메소드 주석처리 후 진행
-    public List<ProductDto>allProducts(Long cno , int page ,int size, String keyword){
+    public Page<ProductDto>allProducts(Long cno , int page ,int size, String keyword){
         //1.페이징처리 설정
         Pageable pageable = PageRequest.of (page-1, size , Sort.by(Sort.Direction.DESC,"pno") );
 
         Page<ProductEntity>productEntities = productEntityRepository.findBySearch(cno,keyword,pageable);
 
         //3반환타입
-        List<ProductDto>productDtoList =  productEntities.stream().map(ProductDto::toDto).collect(Collectors.toList());
+        Page<ProductDto>productDtoList =  productEntities.map(ProductDto::toDto);
         return productDtoList;
     }
 

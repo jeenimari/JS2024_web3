@@ -1,6 +1,7 @@
 package web.controller;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import web.model.dto.CategoryDto;
@@ -171,12 +172,12 @@ public class ProductController {
     * */
 
     @GetMapping("/all")
-    public ResponseEntity<List<ProductDto>> allProducts(
+    public ResponseEntity<Page<ProductDto>> allProducts(
             @RequestParam(required = false)Long cno, //long(기본타입) Long( 참조타입 )
             @RequestParam(defaultValue = "1")int page, //조회할 현재 페이지 번호 , defaultValue
             @RequestParam(defaultValue = "5")int size, // size : 페이지당 게시물 수
             @RequestParam(required = false)String keyword) { // keyword : (제품명) 검색어
-        List<ProductDto>productDtoList = productService.allProducts(cno, page, size, keyword);
+        Page<ProductDto>productDtoList = productService.allProducts(cno, page, size, keyword);
         return ResponseEntity.status(200).body(productDtoList);
     }
 
